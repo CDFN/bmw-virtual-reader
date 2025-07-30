@@ -1,0 +1,89 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo
+Cargo.lock
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+*.lnk
+
+# Build and distribution artifacts
+BMW_Virtual_Reader_Portable/
+BMW_Virtual_Reader_Portable_*.zip
+*.zip
+
+# Configuration files (user-specific)
+config.json
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Backup files
+*.bak
+*.backup
+
+# Test artifacts
+test_output/
+test_results/
+
+# Documentation build artifacts
+docs/_build/
+docs/build/
+
+# Package manager files
+node_modules/
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Rust specific
+**/*.rs.bk
+*.pdb
+
+# Generated files by build scripts
+build_artifacts/
+dist/
+release/
+debug/
+
+# Application specific
+# Keep the lib directory but ignore any temporary files in it
+lib/*.tmp
+lib/*.temp
+lib/*.bak
+
+# Keep source files but ignore any generated content
+src/*.generated.rs
+src/*.tmp
+
+# Ignore any temporary build directories
+build/
+out/ 
