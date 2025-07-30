@@ -42,14 +42,8 @@ A Rust-based GUI application for extracting SWFL/BTLD files using XML configurat
    - Select BTLD files by clicking "Select BTLD"
    - Select SWFL files by clicking "SWFL1" and/or "SWFL2"
 5. Choose your output file location
-6. Click "Extract All" to process the selected files
-
-### Manual File Selection (Legacy)
-
-1. Use the "Manual File Selection" collapsible section
-2. Browse and select individual BTLD, SWFL1, and SWFL2 files
-3. Choose your output file location
-4. Click "Extract All" to process the files
+6. (Optional) Check "Use Desired Size" and set the desired output file size in MB - if the combined files are smaller than this size, zero data will be appended to reach the target size. Required for some ECUs (e.g. EDC17C50 needs 4MB).
+7. Click "Create binary" to process the selected files
 
 ## File Structure Support
 

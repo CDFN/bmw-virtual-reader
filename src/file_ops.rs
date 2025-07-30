@@ -167,6 +167,7 @@ pub fn process_files(
     swfl1_file: Option<&PathBuf>,
     swfl2_file: Option<&PathBuf>,
     output_file: &PathBuf,
+    desired_size_mb: f32,
     ucl_library: &UclLibrary,
     status_callback: &mut dyn FnMut(&str)
 ) -> Result<()> {
@@ -236,7 +237,7 @@ pub fn process_files(
             .unwrap_or(base_addr);
         let total_size = end_addr - base_addr + 1;
         
-        let mut full_buffer = vec![0xFFu8; total_size as usize];
+        let mut full_buffer = vec![0x00u8; total_size as usize];
         
         for (target_addr, data) in all_segments {
             let offset = (target_addr - base_addr) as usize;
@@ -245,11 +246,24 @@ pub fn process_files(
             }
         }
         
+        // Calculate desired size in bytes (0.0 means use natural size)
+        if desired_size_mb > 0.0 {
+            let desired_size_bytes = (desired_size_mb * 1024.0 * 1024.0) as usize;
+            
+            // If the current buffer is smaller than desired size, pad it
+            if full_buffer.len() < desired_size_bytes {
+                let padding_needed = desired_size_bytes - full_buffer.len();
+                full_buffer.extend(vec![0x00u8; padding_needed]);
+                status_callback(&format!("Padded output with {} bytes of zero data to reach {} MB", 
+                    padding_needed, desired_size_mb));
+            }
+        }
+        
         fs::write(output_file, &full_buffer)
             .context("Failed to write output file")?;
         
-        status_callback(&format!("Combined extraction complete: {} bytes, range: 0x{:08X} to 0x{:08X}", 
-            full_buffer.len(), base_addr, end_addr));
+        status_callback(&format!("Combined extraction complete: {} bytes ({} MB), range: 0x{:08X} to 0x{:08X}", 
+            full_buffer.len(), full_buffer.len() as f32 / (1024.0 * 1024.0), base_addr, end_addr));
     }
     
     Ok(())

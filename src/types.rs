@@ -44,4 +44,6 @@ pub enum UIMessage {
     ExtractFiles,
     ReloadUCLLibrary,
     BrowseUCLLibrary,
+    SetDesiredSizeMB(f32),
+    ToggleUseDesiredSize,
 } 

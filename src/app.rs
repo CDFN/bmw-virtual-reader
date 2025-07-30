@@ -236,11 +236,18 @@ impl BMWVirtualReaderApp {
             .clone();
         
         if let Some(ref ucl_lib) = self.ucl_library {
+            let desired_size = if self.ui_state.use_desired_size {
+                self.ui_state.desired_size_mb
+            } else {
+                0.0 // Use 0.0 to indicate no desired size (natural size will be used)
+            };
+            
             process_files(
                 self.btld_file.as_ref(),
                 self.swfl1_file.as_ref(),
                 self.swfl2_file.as_ref(),
                 &output_path,
+                desired_size,
                 ucl_lib,
                 &mut |status| self.status_message = status.to_string()
             )?;

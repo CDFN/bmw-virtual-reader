@@ -74,6 +74,8 @@ impl eframe::App for BMWVirtualReaderApp {
             render_output_configuration(
                 ui,
                 &self.output_file,
+                &mut self.ui_state.desired_size_mb,
+                &mut self.ui_state.use_desired_size,
                 &mut self.ui_state.message_queue
             );
             
@@ -152,6 +154,12 @@ impl BMWVirtualReaderApp {
                         self.config.ucl_library_path = new_path.to_string_lossy().to_string();
                         self.reload_ucl_library();
                     }
+                }
+                UIMessage::SetDesiredSizeMB(size) => {
+                    self.ui_state.desired_size_mb = size;
+                }
+                UIMessage::ToggleUseDesiredSize => {
+                    self.ui_state.use_desired_size = !self.ui_state.use_desired_size;
                 }
             }
         }

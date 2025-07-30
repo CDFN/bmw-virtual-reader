@@ -11,6 +11,8 @@ pub struct UIState {
     pub selected_swfl1_index: Option<usize>,
     pub selected_swfl2_index: Option<usize>,
     pub message_queue: Vec<UIMessage>,
+    pub desired_size_mb: f32,
+    pub use_desired_size: bool,
 }
 
 impl Default for UIState {
@@ -23,6 +25,8 @@ impl Default for UIState {
             selected_swfl1_index: None,
             selected_swfl2_index: None,
             message_queue: Vec::new(),
+            desired_size_mb: 4.0, // Default to 4.0 MB
+            use_desired_size: false, // Default to false (use natural size)
         }
     }
 }
@@ -146,7 +150,7 @@ pub fn render_file_browser(
                             FileType::SWFL => "SWFL",
                         };
                         
-                        let size_mb = file.size as f64 / (1024.0 * 1024.0);
+                        let size_kb = file.size as f64 / 1024.0;
                         
                         ui.group(|ui| {
                             ui.horizontal(|ui| {
@@ -154,7 +158,7 @@ pub fn render_file_browser(
                                     ui.label(egui::RichText::new(&file.display_name)
                                         .size(16.0)
                                         .color(egui::Color32::from_rgb(220, 220, 180)));
-                                    ui.label(egui::RichText::new(format!("Type: {} | Size: {:.1} MB", file_type_str, size_mb))
+                                    ui.label(egui::RichText::new(format!("Type: {} | Size: {:.0} KiB", file_type_str, size_kb))
                                         .color(egui::Color32::from_rgb(160, 160, 160))
                                         .size(12.0));
                                 });
@@ -232,47 +236,101 @@ pub fn render_selected_files(
             
             if let Some(ref path) = btld_file {
                 let file_name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
-                ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new("BTLD:")
-                        .color(egui::Color32::from_rgb(200, 180, 120)));
-                    ui.label(egui::RichText::new(&file_name)
-                        .color(egui::Color32::from_rgb(160, 200, 160)));
-                    if ui.button(egui::RichText::new("Clear")
-                        .color(egui::Color32::from_rgb(200, 140, 140)))
-                        .clicked() {
-                        message_queue.push(UIMessage::ClearFile("btld".to_string()));
-                    }
-                });
+                if let Ok(metadata) = std::fs::metadata(path) {
+                    let size_kb = metadata.len() as f64 / 1024.0;
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("BTLD:")
+                            .color(egui::Color32::from_rgb(200, 180, 120)));
+                        ui.label(egui::RichText::new(&file_name)
+                            .color(egui::Color32::from_rgb(160, 200, 160)));
+                        ui.label(egui::RichText::new(format!("({:.0} KiB)", size_kb))
+                            .color(egui::Color32::from_rgb(140, 140, 140))
+                            .size(11.0));
+                        if ui.button(egui::RichText::new("Clear")
+                            .color(egui::Color32::from_rgb(200, 140, 140)))
+                            .clicked() {
+                            message_queue.push(UIMessage::ClearFile("btld".to_string()));
+                        }
+                    });
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("BTLD:")
+                            .color(egui::Color32::from_rgb(200, 180, 120)));
+                        ui.label(egui::RichText::new(&file_name)
+                            .color(egui::Color32::from_rgb(160, 200, 160)));
+                        if ui.button(egui::RichText::new("Clear")
+                            .color(egui::Color32::from_rgb(200, 140, 140)))
+                            .clicked() {
+                            message_queue.push(UIMessage::ClearFile("btld".to_string()));
+                        }
+                    });
+                }
             }
             
             if let Some(ref path) = swfl1_file {
                 let file_name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
-                ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new("SWFL1:")
-                        .color(egui::Color32::from_rgb(200, 180, 120)));
-                    ui.label(egui::RichText::new(&file_name)
-                        .color(egui::Color32::from_rgb(160, 200, 160)));
-                    if ui.button(egui::RichText::new("Clear")
-                        .color(egui::Color32::from_rgb(200, 140, 140)))
-                        .clicked() {
-                        message_queue.push(UIMessage::ClearFile("swfl1".to_string()));
-                    }
-                });
+                if let Ok(metadata) = std::fs::metadata(path) {
+                    let size_kb = metadata.len() as f64 / 1024.0;
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("SWFL1:")
+                            .color(egui::Color32::from_rgb(200, 180, 120)));
+                        ui.label(egui::RichText::new(&file_name)
+                            .color(egui::Color32::from_rgb(160, 200, 160)));
+                        ui.label(egui::RichText::new(format!("({:.0} KiB)", size_kb))
+                            .color(egui::Color32::from_rgb(140, 140, 140))
+                            .size(11.0));
+                        if ui.button(egui::RichText::new("Clear")
+                            .color(egui::Color32::from_rgb(200, 140, 140)))
+                            .clicked() {
+                            message_queue.push(UIMessage::ClearFile("swfl1".to_string()));
+                        }
+                    });
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("SWFL1:")
+                            .color(egui::Color32::from_rgb(200, 180, 120)));
+                        ui.label(egui::RichText::new(&file_name)
+                            .color(egui::Color32::from_rgb(160, 200, 160)));
+                        if ui.button(egui::RichText::new("Clear")
+                            .color(egui::Color32::from_rgb(200, 140, 140)))
+                            .clicked() {
+                            message_queue.push(UIMessage::ClearFile("swfl1".to_string()));
+                        }
+                    });
+                }
             }
             
             if let Some(ref path) = swfl2_file {
                 let file_name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
-                ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new("SWFL2:")
-                        .color(egui::Color32::from_rgb(200, 180, 120)));
-                    ui.label(egui::RichText::new(&file_name)
-                        .color(egui::Color32::from_rgb(160, 200, 160)));
-                    if ui.button(egui::RichText::new("Clear")
-                        .color(egui::Color32::from_rgb(200, 140, 140)))
-                        .clicked() {
-                        message_queue.push(UIMessage::ClearFile("swfl2".to_string()));
-                    }
-                });
+                if let Ok(metadata) = std::fs::metadata(path) {
+                    let size_kb = metadata.len() as f64 / 1024.0;
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("SWFL2:")
+                            .color(egui::Color32::from_rgb(200, 180, 120)));
+                        ui.label(egui::RichText::new(&file_name)
+                            .color(egui::Color32::from_rgb(160, 200, 160)));
+                        ui.label(egui::RichText::new(format!("({:.0} KiB)", size_kb))
+                            .color(egui::Color32::from_rgb(140, 140, 140))
+                            .size(11.0));
+                        if ui.button(egui::RichText::new("Clear")
+                            .color(egui::Color32::from_rgb(200, 140, 140)))
+                            .clicked() {
+                            message_queue.push(UIMessage::ClearFile("swfl2".to_string()));
+                        }
+                    });
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("SWFL2:")
+                            .color(egui::Color32::from_rgb(200, 180, 120)));
+                        ui.label(egui::RichText::new(&file_name)
+                            .color(egui::Color32::from_rgb(160, 200, 160)));
+                        if ui.button(egui::RichText::new("Clear")
+                            .color(egui::Color32::from_rgb(200, 140, 140)))
+                            .clicked() {
+                            message_queue.push(UIMessage::ClearFile("swfl2".to_string()));
+                        }
+                    });
+                }
             }
         });
     }
@@ -342,6 +400,8 @@ pub fn render_manual_file_selection(
 pub fn render_output_configuration(
     ui: &mut egui::Ui,
     output_file: &Option<PathBuf>,
+    desired_size_mb: &mut f32,
+    use_desired_size: &mut bool,
     message_queue: &mut Vec<UIMessage>
 ) {
     ui.group(|ui| {
@@ -365,6 +425,37 @@ pub fn render_output_configuration(
                 message_queue.push(UIMessage::SelectOutputFile);
             }
         });
+        
+        ui.horizontal(|ui| {
+            ui.checkbox(use_desired_size, egui::RichText::new("Use Desired Size")
+                .color(egui::Color32::from_rgb(180, 180, 180)));
+        });
+        
+        if *use_desired_size {
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new("Desired Size:")
+                    .color(egui::Color32::from_rgb(180, 180, 180)));
+                let mut size_text = format!("{:.1}", desired_size_mb);
+                if ui.text_edit_singleline(&mut size_text).changed() {
+                    if let Ok(size) = size_text.parse::<f32>() {
+                        if size > 0.0 {
+                            *desired_size_mb = size;
+                            message_queue.push(UIMessage::SetDesiredSizeMB(size));
+                        }
+                    }
+                }
+                ui.label(egui::RichText::new("MB")
+                    .color(egui::Color32::from_rgb(180, 180, 180)));
+            });
+            
+            ui.label(egui::RichText::new("Note: If the combined file size is smaller than the desired size, zero data will be appended to reach the target size.")
+                .color(egui::Color32::from_rgb(160, 160, 160))
+                .size(11.0));
+        } else {
+            ui.label(egui::RichText::new("Note: Output file will use the natural size of the combined segments without padding.")
+                .color(egui::Color32::from_rgb(160, 160, 160))
+                .size(11.0));
+        }
     });
 }
 
@@ -374,7 +465,7 @@ pub fn render_extract_button(
     message_queue: &mut Vec<UIMessage>
 ) {
     ui.horizontal(|ui| {
-        if ui.button(egui::RichText::new("Extract All")
+        if ui.button(egui::RichText::new("Create binary")
             .size(18.0)
             .color(egui::Color32::from_rgb(220, 220, 220)))
             .clicked() && !is_processing {
