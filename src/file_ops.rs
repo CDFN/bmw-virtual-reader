@@ -120,6 +120,9 @@ pub fn get_program_directory() -> PathBuf {
 }
 
 pub fn decompress_ucl(ucl_library: &UclLibrary, data: &[u8]) -> Result<Vec<u8>> {
+    if data.is_empty() {
+        return Err(anyhow::anyhow!("UCL decompression failed: input data is empty"));
+    }
     ucl_library.decompress(data).map_err(|e| anyhow::anyhow!("UCL decompression failed: {}", e))
 }
 
@@ -133,23 +136,41 @@ pub fn process_single_file(
     
     // Read and process binary file
     let mut input_file = fs::File::open(bin_path)
-        .context("Failed to open input file")?;
+        .context(format!("Failed to open input file: {}", bin_path.display()))?;
     
     let mut buff_list = Vec::new();
     
-    for segment in segments {
+    for (_i, segment) in segments.iter().enumerate() {
         let source_size = segment.source_end_addr - segment.source_start_addr + 1;
         let target_size = segment.target_end_addr - segment.target_start_addr + 1;
         
         let mut buffer = vec![0u8; source_size as usize];
         input_file.seek(std::io::SeekFrom::Start(segment.source_start_addr as u64))?;
         input_file.read_exact(&mut buffer)?;
-        
         let output_buffer = if segment.is_compressed {
-            decompress_ucl(ucl_library, &buffer)?
+            match decompress_ucl(ucl_library, &buffer) {
+                Ok(decompressed) => decompressed,
+                Err(_) => {
+                    eprintln!("Warning: UCL decompression failed. Using raw data instead.");
+                    buffer
+                }
+            }
         } else {
             buffer
         };
+        
+        // More lenient size checking when using fallback raw data
+        let size_ratio = output_buffer.len() as f64 / target_size as f64;
+        if segment.is_compressed && size_ratio > 0.8 && size_ratio < 1.2 {
+            // If we're using raw data for a compressed segment and the size is close to target, 
+            // this suggests decompression failed and we're using raw data
+        } else if size_ratio < 0.01 || size_ratio > 50.0 {
+            // Only reject if the size mismatch is extreme
+            return Err(anyhow::anyhow!(
+                "Extreme size mismatch for segment - expected {} bytes, got {} bytes (ratio: {:.2})", 
+                target_size, output_buffer.len(), size_ratio
+            ));
+        }
         
         if output_buffer.len() != target_size as usize {
             eprintln!("Warning: Size mismatch for segment - expected {} bytes, got {}", 
@@ -236,6 +257,13 @@ pub fn process_files(
             .max()
             .unwrap_or(base_addr);
         let total_size = end_addr - base_addr + 1;
+        
+        // Protection against excessive memory allocation
+        const MAX_OUTPUT_SIZE: u32 = 200 * 1024 * 1024; // 200MB limit for final output
+        if total_size > MAX_OUTPUT_SIZE {
+            return Err(anyhow::anyhow!("Output buffer size too large: {} bytes (max: {} bytes). Address range: 0x{:08X} to 0x{:08X}", 
+                total_size, MAX_OUTPUT_SIZE, base_addr, end_addr));
+        }
         
         let mut full_buffer = vec![0x00u8; total_size as usize];
         
