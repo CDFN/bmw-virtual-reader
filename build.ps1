@@ -65,7 +65,7 @@ $readme | Out-File "$portable\README.txt" -Encoding UTF8
 
 # Create zip if not skipping
 if ($args -notcontains "-SkipZip") {
-    $zip = "BMW_Virtual_Reader_Portable_v0.2.0.zip"
+    $zip = "BMW_Virtual_Reader_Portable_v0.3.0.zip"
     if (Test-Path $zip) {
         Remove-Item $zip -Force
     }
